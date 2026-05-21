@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Helpers;
+
+/**
+ * Class Helpers
+ *
+ * Chứa các hàm tiện ích (helper) dùng chung toàn dự án.
+ * Cách gọi:
+ *    use App\Helper\Helpers;
+ *    Helpers::parse('1.200.000 ₫');
+ *    Helpers::format(1200000);
+ */
+class Helpers
+{
+    /**
+     * Chuyển chuỗi giá tiền Việt Nam thành số thực (float)
+     *
+     *
+     * @param string $priceString
+     * @return float
+     */
+    public static function parse(string $priceString): float
+    {
+        // Loại bỏ các tiền tố/hậu tố tiền tệ và khoảng trắng
+        $number = preg_replace('/[a-zA-Zđ₫\s]/iu', '', $priceString);
+        
+        // Nếu chuỗi tận cùng là .00 (định dạng DECIMAL của database) thì cắt bỏ để tránh xóa lầm dấu chấm phẩy
+        if (preg_match('/\.00$/', $number)) {
+            $number = substr($number, 0, -3);
+        }
+
+        // Xóa các dấu chấm, phẩy còn lại (đây là các dấu hàng ngàn)
+        $number = str_replace(['.', ','], '', $number);
+
+        // Nếu chuỗi rỗng hoặc không phải số, trả về 0.0
+        if (!is_numeric($number)) {
+            return 0.0;
+        }
+
+        return (float) $number;
+    }
+
+    /**
+     * Định dạng số thành chuỗi giá tiền Việt Nam
+     *
+     *
+     * @param float|int $number
+     * @param bool $includeSymbol - có hiển thị ký hiệu tiền hay không
+     * @return string
+     */
+    public static function format(float|int $number, bool $includeSymbol = true): string
+    {
+        $formatted = number_format($number, 0, ',', '.');
+        return $includeSymbol ? "{$formatted} ₫" : $formatted;
+    }
+
+    /**
+     * Kiểm tra xem chuỗi có chứa ký hiệu tiền tệ hay không
+     *
+     * @param string $value
+     * @return bool
+     */
+    public static function hasCurrencySymbol(string $value): bool
+    {
+        return str_contains($value, '₫') || str_contains($value, 'VNĐ') || str_contains($value, 'vnd');
+    }
+
+    /**
+     * Debug helper — chỉ dùng khi cần test
+     *
+     * @return string
+     */
+    public static function test(): string
+    {
+        return "Helper hoạt động tốt!";
+    }
+}
